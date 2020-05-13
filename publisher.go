@@ -22,8 +22,8 @@ var (
 	// ErrNoRoute indicates that queue is bound that matches the routing key.
 	// @see: https://www.rabbitmq.com/amqp-0-9-1-errata.html#section_17
 	ErrNoRoute = errors.New("queue not bound")
-	// RetryAttemptContextKey is added to the context of RetryPublisher with the retry attempt number value.
-	RetryAttemptContextKey = contextKey("retry-attempt")
+	// retryAttemptContextKey is added to the context of RetryPublisher with the retry attempt number value.
+	retryAttemptContextKey = contextKey("retry-attempt")
 )
 
 // Publisher interface provides functionality of publishing to RabbitMQ.
@@ -179,7 +179,7 @@ func (p *RetryPublisher) Publish(ctx context.Context, exchange, key string, msg 
 	var err error
 
 	for attempt := uint(1); attempt <= p.maxAttempts; attempt++ {
-		ctx = context.WithValue(ctx, RetryAttemptContextKey, attempt)
+		ctx = context.WithValue(ctx, retryAttemptContextKey, attempt)
 		err = p.Publisher.Publish(ctx, exchange, key, msg)
 		if err != nil {
 			select {
@@ -194,6 +194,13 @@ func (p *RetryPublisher) Publish(ctx context.Context, exchange, key string, msg 
 	}
 
 	return err
+}
+
+// RetryAttempt returns the current retry attempt of a message published by RetryPublisher.
+// retryAttempt, ok := RetryAttempt(ctx)
+func RetryAttempt(ctx context.Context) (uint, bool) {
+	retryAttempt, ok := ctx.Value(retryAttemptContextKey).(uint)
+	return retryAttempt, ok
 }
 
 // PublishDelaySetup sets function for publish delay time.Duration receiving.
