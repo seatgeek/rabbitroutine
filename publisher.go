@@ -197,7 +197,7 @@ func (p *RetryPublisher) Publish(ctx context.Context, exchange, key string, msg 
 }
 
 // RetryAttempt returns the current retry attempt of a message published by RetryPublisher.
-// retryAttempt, ok := RetryAttempt(ctx)
+// If the retry attempt key is not set in the context, returns false as second value.
 func RetryAttempt(ctx context.Context) (uint, bool) {
 	retryAttempt, ok := ctx.Value(retryAttemptContextKey).(uint)
 	return retryAttempt, ok
